@@ -1,0 +1,12 @@
+[project]
+name = "stock-alert"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "bs4>=0.0.2",
+    "python-telegram-bot>=22.7",
+    "requests>=2.32.5",
+    "schedule>=1.2.2",
+]
