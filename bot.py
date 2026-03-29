@@ -4,7 +4,7 @@ from config import TOKEN
 from scraper import scrapping
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Heyy, Welcome. How can I help You? type /services to view all the services.")
+    await update.message.reply_text("Heyy, Welcome to BitWatch Services. How can I help You? type /services to view all the services.")
 async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     fresh_data = scrapping()
     await update.message.reply_text(f'{fresh_data}')
@@ -30,16 +30,23 @@ async def stop_alert(update, context):
 
 
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-   await update.message.reply_text("/start - Greetings /check - to check current bitcoin price /alert - to start automatic price view service /stop_alert - to stop automatic price view service")
-
+async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
+   await update.message.reply_text(
+    "🤖 *Bitcoin Alert Bot BITWATCH — Commands*\n\n"
+    "/start — Welcome message\n"
+    "/check — Get current Bitcoin price\n"
+    "/alert — Start hourly price alerts\n"
+    "/stop\\_alert — Stop price alerts\n"
+    "/services — Show this menu",
+    parse_mode="Markdown"
+)
 
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("check",check))
 app.add_handler(CommandHandler("alert",alert))
 app.add_handler(CommandHandler("stop_alert",stop_alert))
-app.add_handler(CommandHandler("help_command",services))
+app.add_handler(CommandHandler("services",services))
 
 
 # IMPORTED IN THREADING
