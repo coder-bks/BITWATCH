@@ -12,4 +12,6 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("check",check))
-app.run_polling()
+
+# IMPORTED IN THREADING
+# app.run_polling()

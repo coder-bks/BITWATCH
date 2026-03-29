@@ -10,8 +10,10 @@ def job():
     if has_changed:
         notify(f"Alert! Quote changed: {fresh_data}")  
 
-schedule.every(1).hours.do(job)
+schedule.every(10).seconds.do(job)
 
-while True:
-    schedule.run_pending()
-    time.sleep(60)
+
+# IMPORTED IN THREADING
+# while True:
+#     schedule.run_pending()
+#     time.sleep(60)
