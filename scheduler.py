@@ -14,7 +14,7 @@ def job():
     except Exception as e:
         print(f"Job failed: {e}. Will retry next run.")
 
-schedule.every(1).hours.do(job)
+schedule.every(30).minutes.do(job)
 
 
 # IMPORTED IN THREADING
