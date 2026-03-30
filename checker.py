@@ -2,7 +2,7 @@ from pathlib import Path
 from scraper import data
 def checking(data):
 
-    relative_folder_path = Path("../stock alert/data") 
+    relative_folder_path = Path("data/last_price.txt")
     file_to_open = relative_folder_path / "last_price.txt"
     
     try:
@@ -20,7 +20,6 @@ def checking(data):
                  f.write(f'{data}')
                 return True     
             else:
-                print("same data")
                 return False
     
 
