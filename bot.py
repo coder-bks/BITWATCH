@@ -52,4 +52,3 @@ app.add_handler(CommandHandler("services",services))
 # IMPORTED IN THREADING
 # app.run_polling()
 
-#add package python-telegram-bot[job-queue]

@@ -15,6 +15,3 @@ def scrapping():
         raise ValueError("website not reachable or crashed")
 
 
-
-
-# print(data)
