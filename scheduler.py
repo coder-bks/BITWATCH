@@ -4,7 +4,6 @@ from checker import checking
 import schedule
 import time
 
-
 def job():
     try:
         fresh_data = scrapping()
@@ -14,8 +13,10 @@ def job():
     except Exception as e:
         print(f"Job failed: {e}. Will retry next run.")
 
-schedule.every(30).minutes.do(job)
+schedule.every(10).seconds.do(job)
 
+# import traceback # traceback to exactly point where the error was started
+#         traceback.print_exc()
 
 # IMPORTED IN THREADING
 # while True:

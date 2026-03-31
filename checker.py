@@ -1,5 +1,5 @@
 from pathlib import Path
-from scraper import data
+
 def checking(data):
 
     relative_folder_path = Path("data")
@@ -28,4 +28,3 @@ def checking(data):
             f.write(f'{data}')
         return False
 
-check=checking(data)
