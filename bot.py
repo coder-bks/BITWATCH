@@ -2,6 +2,13 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from config import TOKEN
 from scraper import scrapping
+from config import GROQ_KEY
+from groq import Groq
+import asyncio
+
+client = Groq(api_key=GROQ_KEY)
+
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Heyy, Welcome to BitWatch Services. How can I help You? type /services to view all the services.")
@@ -29,6 +36,24 @@ async def stop_alert(update, context):
     await update.message.reply_text("Alert service stopped!")
 
 
+async def funfact(update, context):
+    loop = asyncio.get_event_loop()
+
+    response = await loop.run_in_executor(
+        None,
+        lambda: client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{
+                "role": "user",
+                "content": "Give a interesting Bitcoin fact or sarcastic joke in 1 sentences."
+            }]
+        )
+    )
+
+    text = response.choices[0].message.content
+
+    await update.message.reply_text(text)
+
 
 async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
    await update.message.reply_text(
@@ -47,6 +72,7 @@ app.add_handler(CommandHandler("check",check))
 app.add_handler(CommandHandler("alert",alert))
 app.add_handler(CommandHandler("stop_alert",stop_alert))
 app.add_handler(CommandHandler("services",services))
+app.add_handler(CommandHandler("funfact", funfact))
 
 
 # IMPORTED IN THREADING

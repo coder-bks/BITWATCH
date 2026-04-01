@@ -3,3 +3,4 @@ beautifulsoup4
 schedule
 python-telegram-bot[job-queue]
 python-dotenv
+groq
