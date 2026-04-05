@@ -8,8 +8,8 @@ def run_scheduler():
       time.sleep(60)
 
 
-def main():
 # Launch scheduler in background thread
+def main():
     thread = threading.Thread(target=run_scheduler)
     thread.daemon = True  # dies when main program dies
     thread.start()

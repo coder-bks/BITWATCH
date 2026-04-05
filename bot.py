@@ -21,10 +21,16 @@ async def send_alert(context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=context.job.chat_id, text=fresh_data)
 
 async def alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    jobs = context.job_queue.get_jobs_by_name("price_alert")
+    
+    if jobs:
+        await update.message.reply_text("Alert service is already running! Use /stop_alert to stop it first.")
+        return
+    
     context.job_queue.run_repeating(
-        send_alert, 
-        interval=3600, 
-        chat_id=update.effective_chat.id, 
+        send_alert,
+        interval=3600,
+        chat_id=update.effective_chat.id,
         name="price_alert"
     )
     await update.message.reply_text("Alert service started! You'll get updates every hour.")
