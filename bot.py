@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 from config import TOKEN
 from scraper import scrapping
 from config import GROQ_KEY
@@ -31,6 +31,11 @@ async def alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop_alert(update, context):
     jobs = context.job_queue.get_jobs_by_name("price_alert")
+    
+    if not jobs:
+        await update.message.reply_text("No active alert service found. Use /alert to start one.")
+        return
+    
     for job in jobs:
         job.schedule_removal()
     await update.message.reply_text("Alert service stopped!")
@@ -54,6 +59,10 @@ async def funfact(update, context):
 
     await update.message.reply_text(text)
 
+async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "I only understand commands. Type /services to see what I can do."
+    )
 
 async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
    await update.message.reply_text(
@@ -66,7 +75,10 @@ async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
     parse_mode="Markdown"
 )
 
+
+
 app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, unknown))
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("check",check))
 app.add_handler(CommandHandler("alert",alert))
