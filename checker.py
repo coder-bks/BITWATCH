@@ -1,11 +1,11 @@
 from pathlib import Path
-
+import os
 
 
 def checking(data):
 
-    relative_folder_path = Path("data")
-    file_to_open = relative_folder_path / "last_price.txt"
+    os.makedirs("data", exist_ok=True)
+    file_to_open = Path("data/last_price.txt")
     
     try:
         with open(file_to_open, "r",encoding="utf-8") as f:
