@@ -1,19 +1,24 @@
-₿ BitWatch — Live Bitcoin Price Alert Bot
-
+# ₿ BitWatch — Live Bitcoin Price Alert Bot
+ 
 > 🚀 **Live Demo:** [Click here to try BitWatch on Telegram](https://t.me/EquitysharesBot)
-
-A Telegram bot that tracks live Bitcoin prices in **INR** and **USD**, detects price changes automatically, and delivers real-time alerts straight to your phone — built completely from scratch in Python.
-
+ 
+A Telegram bot that tracks live Bitcoin prices in **INR** and **USD**, sends automatic hourly alerts, and generates AI powered Bitcoin facts — built completely from scratch in Python and deployed 24/7 on Railway.
+ 
 ---
-
+ 
 ## What It Does
-
-BitWatch connects to the CoinGecko API every hour, checks if the Bitcoin price has changed, and sends you a Telegram message if it has. You can also message the bot directly and it will reply with the current price, generate an AI powered Bitcoin fact using Groq's LLaMA 3, or start and stop automatic alerts — all from Telegram.
-
+ 
+BitWatch runs two systems simultaneously using Python threading:
+ 
+- A **background scheduler** that fetches and saves the latest BTC price every 6 hours silently in the background
+- A **Telegram bot** that listens for commands and responds instantly
+ 
+Users can check the current price anytime, subscribe to automatic hourly price updates, or get an AI generated Bitcoin fact — all directly from Telegram.
+ 
 ---
-
+ 
 ## Bot Commands
-
+ 
 | Command | Description |
 |---------|-------------|
 | `/start` | Welcome message |
@@ -22,23 +27,23 @@ BitWatch connects to the CoinGecko API every hour, checks if the Bitcoin price h
 | `/stop_alert` | Stop automatic price updates |
 | `/funfact` | Get an AI generated Bitcoin fun fact |
 | `/services` | View all available commands |
-
+ 
 ---
-
+ 
 ## Features
-
+ 
 - 📡 Live BTC price in both **INR** and **USD** via CoinGecko Demo API
-- 🔔 Automatic hourly price change detection and alerts
-- 🤖 Interactive Telegram bot with 6 commands
-- 🧠 AI generated Bitcoin facts powered by **Groq LLaMA 3**
+- ⏰ Automatic hourly price updates via Telegram JobQueue
+- 🧠 AI generated Bitcoin facts powered by **Groq LLaMA 3.3 70B**
 - 🛡️ Duplicate alert prevention — one active alert per user
 - 💬 Handles unknown messages gracefully
+- 🔒 Secrets managed via environment variables — nothing hardcoded
 - ☁️ Deployed 24/7 on **Railway**
-
+ 
 ---
-
+ 
 ## Tech Stack
-
+ 
 | Layer | Technology |
 |-------|------------|
 | Language | Python 3.10 |
@@ -48,96 +53,119 @@ BitWatch connects to the CoinGecko API every hour, checks if the Bitcoin price h
 | AI Fun Facts | Groq API — LLaMA 3.3 70B |
 | Scheduling | schedule + Python threading |
 | Deployment | Railway |
-
+ 
 ---
-
+ 
 ## Project Architecture
-
+ 
 ```
 BITWATCH/
 │
 ├── main.py           # entry point — runs scheduler and bot simultaneously via threading
 ├── scraper.py        # fetches live BTC price from CoinGecko API
-├── checker.py        # compares new price against last saved price
-├── notifier.py       # sends Telegram alert when price changes
-├── scheduler.py      # defines job() and hourly schedule
+├── checker.py        # compares new price against last saved price, auto creates data folder
+├── notifier.py       # sends Telegram alert messages
+├── scheduler.py      # silently tracks price every 6 hours in background
 ├── bot.py            # all Telegram bot commands and handlers
-├── config.py         # reads secrets from environment variables
+├── config.py         # reads all secrets from environment variables
 ├── Procfile          # tells Railway which file to run
 ├── requirements.txt  # all Python dependencies
 └── data/
     └── last_price.txt  # persists last known price between runs
 ```
-
-Each file has a single responsibility. When I switched from web scraping to the CoinGecko API, I only changed `scraper.py` — nothing else broke. That's separation of concerns working in practice.
-
+ 
 ---
-
+ 
 ## How It Works
-
-1. `main.py` starts two processes simultaneously using Python **threading**
-2. The scheduler runs `job()` every hour in a **background daemon thread**
-3. `job()` calls `scraper.py` to get the latest BTC price
-4. `checker.py` compares it to the last saved price in `last_price.txt`
-5. If the price changed — `notifier.py` sends a Telegram alert
-6. Meanwhile the bot listens for commands in the **main thread** via polling
-
+ 
+```
+main.py starts
+    │
+    ├── Thread 1 (background daemon)
+    │   └── every 6 hours → scrape price → save to last_price.txt
+    │
+    └── Thread 2 (main thread)
+        └── always listening → responds to /check /alert /funfact
+```
+ 
+1. `main.py` launches two processes simultaneously using Python **threading**
+2. The scheduler silently fetches and saves BTC price every 6 hours
+3. The bot listens for Telegram commands in the main thread
+4. `/alert` uses **JobQueue** to send hourly price updates to subscribed users
+5. `/check` fetches live price directly and replies instantly
+6. `/funfact` calls Groq's LLaMA 3 API and returns a fresh AI generated fact
+ 
 ---
-
+ 
+## Key Engineering Decisions
+ 
+**Separation of concerns** — each file has one responsibility. When the API source changed, only `scraper.py` needed updating — nothing else broke.
+ 
+**Threading over multiple processes** — scheduler and bot run in the same process using Python's `threading` module. The scheduler runs as a daemon thread so it automatically stops when the main thread exits.
+ 
+**JobQueue for user alerts** — `/alert` uses python-telegram-bot's built-in JobQueue for per-user scheduled messages. This keeps alert management within the async bot environment and lets each user control their own subscription.
+ 
+**Scheduler for background tracking only** — the scheduler silently saves price data every 6 hours without sending messages. This avoids duplicate notifications since JobQueue already handles user alerts.
+ 
+**CoinGecko Demo API** — chosen over the free tier because the free tier blocks cloud server IPs. The Demo API is designed for server use and works reliably on Railway. At 4 calls per day we use 0.04% of the daily limit.
+ 
+**Environment variables for secrets** — all API keys and tokens are read via `os.environ.get()`. Locally `config.py` reads from the environment. On Railway the dashboard injects values at runtime. No secrets ever committed to GitHub.
+ 
+**Auto folder creation** — `checker.py` uses `os.makedirs("data", exist_ok=True)` to create the data folder automatically on Railway since `.gitignore` excludes it from the repo.
+ 
+**Duplicate alert prevention** — `/alert` checks for existing JobQueue jobs before creating a new one, preventing users from receiving multiple notifications per hour.
+ 
+---
+ 
 ## Setup & Installation
-
+ 
 ### 1. Clone the repo
 ```bash
 git clone https://github.com/coder-bks/BitWatch.git
 cd BitWatch
 ```
-
+ 
 ### 2. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
+ 
 ### 3. Create a Telegram Bot
 - Search **BotFather** on Telegram
 - Send `/newbot` and follow the steps
 - Copy your **Bot Token**
-
+ 
 ### 4. Get your personal Chat ID
 - Send any message to your bot on Telegram
 - Visit `https://api.telegram.org/bot{TOKEN}/getUpdates`
 - Find `"chat": {"id": ...}` — that number is your Chat ID
-
+ 
 ### 5. Get a free CoinGecko Demo API key
 - Go to [coingecko.com/en/developers/dashboard](https://www.coingecko.com/en/developers/dashboard)
 - Sign up and create a free Demo API key
-
+ 
 ### 6. Get a free Groq API key
 - Go to [console.groq.com](https://console.groq.com)
 - Sign up and create an API key
-
-### 7. Create `config.py` in the project root
-```python
-import os
-
-TOKEN = os.environ.get("TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
-COINGECKO_KEY = os.environ.get("COINGECKO_KEY")
-GROQ_KEY = os.environ.get("GROQ_KEY")
+ 
+### 7. Set environment variables
+Set these in your terminal or add directly to `config.py` for local development:
 ```
-
-For local development set actual values directly. For deployment use environment variables.
-
-> ⚠️ `config.py` is listed in `.gitignore` — never commit your secrets to GitHub.
-
+TOKEN=your_telegram_bot_token
+CHAT_ID=your_personal_chat_id
+COINGECKO_KEY=your_coingecko_demo_key
+GROQ_KEY=your_groq_api_key
+```
+ 
 ### 8. Run locally
 ```bash
 python main.py
 ```
-
+ 
 ---
-
+ 
 ## Deployment on Railway
-
+ 
 1. Push code to GitHub
 2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
 3. Select the BitWatch repo
@@ -147,61 +175,45 @@ python main.py
    - `COINGECKO_KEY`
    - `GROQ_KEY`
 5. Railway reads the `Procfile` and deploys automatically
-
+ 
 **Procfile:**
 ```
 worker: python main.py
 ```
-
+ 
 ---
-
-## Key Engineering Decisions
-
-**Separation of concerns** — each module has one job, making the codebase easy to extend and debug. Switching APIs required changing only one file.
-
-**Threading over multiple processes** — running the scheduler and bot in the same process using threading avoids the complexity of process management while keeping both alive simultaneously.
-
-**JobQueue for user alerts** — used python-telegram-bot's built-in JobQueue for per-user scheduled alerts instead of a second thread, keeping alert management within the async bot environment.
-
-**CoinGecko Demo API** — chosen over the free tier because the free tier blocks cloud server IPs. The Demo API is designed for server use and works reliably on Railway.
-
-**Environment variables for secrets** — API keys and tokens are never hardcoded. Locally stored in `config.py` via `.gitignore`, in production injected by Railway at runtime.
-
-**Guard clauses for user safety** — duplicate `/alert` calls are rejected with a clear message. Unknown commands receive a helpful response instead of silence.
-
----
-
+ 
 ## Known Limitations
-
+ 
 - Alert subscriptions reset if the server restarts — persistent alerts require a database
-- Scheduler alerts go to one configured user — multi-user scheduler support requires storing chat IDs in a database
-- No price history — planned for a future version
-
+- Scheduler tracks price for one configured user — multi-user scheduler requires database storage
+- CoinGecko Demo API caches responses for 30-60 seconds — `/check` reflects this
+ 
 ---
-
+ 
 ## Future Improvements
-
+ 
 - Price threshold alerts — notify only when BTC crosses a user defined value
-- Database integration for persistent multi-user alert subscriptions
+- Database integration for persistent multi-user subscriptions
 - Support for multiple coins — ETH, SOL, BNB
 - Proper logging using Python's `logging` module
 - Simple web dashboard showing price history
-
+ 
 ---
-
+ 
 ## What I Learned Building This
-
+ 
 - Consuming REST APIs and parsing JSON responses
 - Separation of concerns and why it matters in practice
 - Python threading and daemon threads
-- JobQueue for async scheduled messaging
-- UTF-8 encoding for Unicode currency symbols
+- JobQueue for async scheduled Telegram messaging
+- UTF-8 encoding for Unicode currency symbols like ₹
 - Environment variables and secrets management
-- Cloud deployment and debugging production issues
+- Debugging real production issues — API IP blocking, cloud file system differences
 - The difference between local and production behaviour
-
+ 
 ---
-
-Built by **BALKRISHNA SAWANT** — self taught Python developer
-
+ 
+Built by **Balkrishna Sawant** — self taught Python developer 
+ 
 ⭐ Star this repo if you found it useful!

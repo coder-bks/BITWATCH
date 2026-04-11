@@ -13,7 +13,7 @@ def job():
     except Exception as e:
         print(f"Job failed: {e}. Will retry next run.")
 
-schedule.every(1).hours.do(job)
+schedule.every(6).hours.do(job)
 
 # import traceback # traceback to exactly point where the error was started
 #         traceback.print_exc()
